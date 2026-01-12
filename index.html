@@ -1,0 +1,682 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>BTC Ledger Ultimate</title>
+    
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <style>
+        :root {
+            --primary: #F7931A; /* Bitcoin Orange */
+            --primary-dark: #b86200;
+            --bg-color: #050505;
+            --glass-bg: rgba(22, 22, 22, 0.6);
+            --glass-border: rgba(255, 255, 255, 0.08);
+            --glass-highlight: rgba(255, 255, 255, 0.03);
+            --text: #ffffff;
+            --text-muted: #9ca3af;
+            --success: #00E096;
+            --danger: #FF3B30;
+            --shadow-3d: 0 10px 30px -10px rgba(0,0,0,0.8);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Inter', sans-serif; -webkit-tap-highlight-color: transparent; }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            overflow-x: hidden;
+            /* Fundo Bitcoin Moderno */
+            background-image: 
+                radial-gradient(circle at 15% 15%, rgba(247, 147, 26, 0.15) 0%, transparent 40%),
+                radial-gradient(circle at 85% 85%, rgba(50, 50, 200, 0.08) 0%, transparent 40%),
+                url('data:image/svg+xml;utf8,<svg width="100" height="100" transform="scale(5)" opacity="0.03" xmlns="http://www.w3.org/2000/svg"><path fill="white" d="M48.8 33.6c-1.6-11-8.5-13.6-17.2-16.7l3.5-14.1-8.6-2.1-3.4 13.7c-2.3-.6-4.6-1.1-6.9-1.6l3.4-13.7-8.6-2.1-3.5 14c-1.8-.4-3.7-.9-5.4-1.3L0 16.1l3 11.9s8.1-2 7.9 0c.2.1.3.4.3.7l-3.3 13.2c.2 0 .4.1.6.1l-.6-.2-4.6 18.5c-.1.3-.4.6-.7.5.3 1.9-7.9 2-7.9 2L0 87l6.5 1.6c1.8.4 3.5.9 5.3 1.3l-3.5 14 8.6 2.1 3.5-14c2.3.6 4.5 1.1 6.8 1.7l-3.4 13.9 8.6 2.1 3.5-14.1c14.6 2.8 25.6 1.7 30.2-11.6 3.7-10.6-1.9-16.7-7.7-20.6 5.5-1.3 9.6-5 10.7-12.5zM30 76.5c-4 16.3-31.2 7.5-40 5.4l7.1-28.7c8.8 2.2 36.8 6.6 32.9 23.3zm4.5-41c-3.7 14.8-26.6 7.3-34 5.5l6.5-26c7.4 1.8 31.1 5.2 27.5 20.5z"/></svg>');
+            background-attachment: fixed;
+        }
+
+        /* Efeitos de Blur e Privacidade */
+        .blur-effect { filter: blur(10px); cursor: default; user-select: none; transition: filter 0.3s; }
+
+        .app-container {
+            width: 100%;
+            max-width: 500px;
+            /* Container estilo "Glass" */
+            background: rgba(10, 10, 10, 0.4);
+            backdrop-filter: blur(25px);
+            -webkit-backdrop-filter: blur(25px);
+            min-height: 100vh;
+            position: relative;
+            box-shadow: 0 0 80px rgba(0,0,0,0.9);
+            display: flex;
+            flex-direction: column;
+            border-left: 1px solid rgba(255,255,255,0.05);
+            border-right: 1px solid rgba(255,255,255,0.05);
+        }
+
+        /* CARD 3D GLASS - O Estilo Principal */
+        .glass-card {
+            background: linear-gradient(145deg, rgba(30,30,30,0.6) 0%, rgba(10,10,10,0.8) 100%);
+            border: 1px solid var(--glass-border);
+            border-top: 1px solid rgba(255,255,255,0.15); /* Luz superior */
+            box-shadow: var(--shadow-3d);
+            border-radius: 20px;
+            padding: 20px;
+            margin-bottom: 20px;
+            position: relative;
+            transition: transform 0.2s ease;
+        }
+        .glass-card:active { transform: scale(0.98); }
+
+        /* Header */
+        header {
+            padding: 15px 25px;
+            background: rgba(0, 0, 0, 0.3);
+            backdrop-filter: blur(10px);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+            height: 70px;
+        }
+        .brand { font-weight: 900; font-size: 1.2rem; display: flex; align-items: center; gap: 10px; color: var(--text); text-shadow: 0 2px 10px rgba(0,0,0,0.5); }
+        .icon-btn { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); width: 40px; height: 40px; border-radius: 12px; color: var(--text); cursor: pointer; display: flex; align-items: center; justify-content: center; transition: 0.2s; }
+        .icon-btn:hover { background: rgba(247, 147, 26, 0.2); border-color: var(--primary); color: var(--primary); }
+
+        /* Telas */
+        .screen-content { flex: 1; padding: 20px; overflow-y: auto; padding-bottom: 80px; }
+        .screen { display: none; animation: popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+        .screen.active { display: block; }
+        @keyframes popIn { from { opacity: 0; transform: scale(0.95) translateY(10px); } to { opacity: 1; transform: scale(1) translateY(0); } }
+
+        /* Hero Balance (Bitcoin Coin Style) */
+        .hero-card {
+            background: radial-gradient(circle at top right, #2a2a2a, #000);
+            border: 1px solid rgba(247, 147, 26, 0.3);
+            box-shadow: 0 0 30px rgba(247, 147, 26, 0.15);
+            border-radius: 24px;
+            padding: 30px 20px;
+            text-align: center;
+            margin-bottom: 20px;
+            position: relative;
+            overflow: hidden;
+        }
+        .hero-card::after {
+            content: '₿';
+            position: absolute;
+            right: -20px;
+            bottom: -30px;
+            font-size: 150px;
+            color: rgba(247, 147, 26, 0.05);
+            font-weight: bold;
+            transform: rotate(-15deg);
+        }
+        .hero-title { font-size: 0.8rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 2px; margin-bottom: 8px; }
+        .hero-balance { font-size: 2.5rem; font-weight: 900; letter-spacing: -1px; margin-bottom: 5px; text-shadow: 0 4px 10px rgba(0,0,0,0.5); }
+        .hero-sats { font-size: 1rem; color: var(--primary); font-family: monospace; background: rgba(247, 147, 26, 0.15); padding: 5px 15px; border-radius: 20px; border: 1px solid rgba(247, 147, 26, 0.2); display: inline-block; }
+
+        /* Widgets (Sentimento & Sobre) */
+        .widget-row { display: flex; gap: 15px; margin-bottom: 25px; }
+        .widget { flex: 1; padding: 15px; border-radius: 18px; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; height: 100px; cursor: pointer; }
+        
+        /* Menu Principal */
+        .menu-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+        .menu-item {
+            background: rgba(30, 30, 30, 0.5);
+            border: 1px solid rgba(255,255,255,0.05);
+            border-radius: 20px;
+            padding: 25px 15px;
+            display: flex; flex-direction: column; align-items: center; gap: 12px;
+            transition: 0.2s;
+            position: relative; overflow: hidden;
+        }
+        .menu-item:hover { border-color: var(--primary); background: rgba(247, 147, 26, 0.05); transform: translateY(-3px); }
+        .menu-item i { font-size: 1.8rem; color: var(--text); filter: drop-shadow(0 0 5px rgba(255,255,255,0.2)); }
+        .menu-item span { font-size: 0.9rem; font-weight: 600; color: var(--text-muted); }
+        .menu-item.highlight i { color: var(--primary); filter: drop-shadow(0 0 10px rgba(247, 147, 26, 0.5)); }
+
+        /* Inputs & Buttons Modernos */
+        .modern-input { width: 100%; background: rgba(0,0,0,0.5); border: 1px solid rgba(255,255,255,0.1); padding: 18px; border-radius: 14px; color: white; font-size: 1rem; margin-bottom: 15px; transition: 0.3s; }
+        .modern-input:focus { border-color: var(--primary); outline: none; box-shadow: 0 0 0 3px rgba(247, 147, 26, 0.1); }
+
+        .btn-modern { width: 100%; padding: 18px; border-radius: 14px; border: none; font-weight: 800; font-size: 1rem; cursor: pointer; transition: 0.2s; display: flex; align-items: center; justify-content: center; gap: 10px; text-transform: uppercase; letter-spacing: 0.5px; }
+        .btn-primary { background: linear-gradient(135deg, #F7931A 0%, #d47a0f 100%); color: #000; box-shadow: 0 5px 15px rgba(247, 147, 26, 0.3); }
+        .btn-success { background: linear-gradient(135deg, #00E096 0%, #00b076 100%); color: #000; }
+        .btn-danger { background: linear-gradient(135deg, #FF3B30 0%, #d62d24 100%); color: #fff; }
+        .btn-outline { background: transparent; border: 1px solid rgba(255,255,255,0.1); color: #ccc; }
+        .btn-outline:active { background: rgba(255,255,255,0.1); }
+
+        /* Lista de Doações */
+        .donation-item { background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.05); padding: 15px; border-radius: 12px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; cursor: pointer; transition: 0.2s; }
+        .donation-item:active { background: rgba(255,255,255,0.1); }
+        .donation-info { flex: 1; margin-right: 10px; overflow: hidden; }
+        .donation-info h4 { color: var(--primary); font-size: 0.9rem; margin-bottom: 4px; display: flex; align-items: center; gap: 6px; }
+        .donation-info p { font-size: 0.75rem; color: #777; font-family: monospace; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+        /* Gráfico */
+        .chart-wrapper { position: relative; height: 250px; width: 100%; margin-top: 10px; }
+
+    </style>
+</head>
+<body>
+
+<div class="app-container">
+    
+    <header>
+        <div class="brand">
+            <i class="fab fa-bitcoin fa-xl" style="color: var(--primary);"></i> BTC LEDGER
+        </div>
+        <div style="display: flex; gap: 10px;">
+            <button class="icon-btn" onclick="togglePrivacy()" id="privacy-btn">
+                <i class="fas fa-eye"></i>
+            </button>
+            <button class="icon-btn" onclick="goTo('home')">
+                <i class="fas fa-home"></i>
+            </button>
+        </div>
+    </header>
+
+    <div class="screen-content">
+        
+        <div id="screen-home" class="screen active">
+            
+            <div class="hero-card glass-card">
+                <div class="hero-title">Patrimônio Estimado</div>
+                <div class="hero-balance sensitive-data" id="hero-balance">R$ 0,00</div>
+                <div class="hero-sats sensitive-data" id="hero-sats">0 sats</div>
+            </div>
+
+            <div class="widget-row">
+                <div class="glass-card widget" style="margin: 0; border: 1px solid #333;" id="fg-widget">
+                    <div style="font-size: 0.7rem; color: #888; text-transform: uppercase;">Sentimento</div>
+                    <div id="fg-value" style="font-size: 1.8rem; font-weight: 900; margin: 5px 0;">--</div>
+                    <div id="fg-text" style="font-size: 0.7rem; opacity: 0.8;">Carregando</div>
+                </div>
+
+                <div class="glass-card widget" style="margin: 0; background: linear-gradient(145deg, #222, #111); cursor: pointer;" onclick="goTo('sobre')">
+                    <i class="fas fa-hand-holding-heart" style="color: var(--primary); font-size: 1.5rem; margin-bottom: 8px;"></i>
+                    <div style="font-size: 0.8rem; font-weight: bold;">Sobre e<br>Doações</div>
+                </div>
+            </div>
+
+            <div class="menu-grid">
+                <div class="menu-item highlight" onclick="goTo('economias')">
+                    <i class="fas fa-plus-circle"></i>
+                    <span>Nova Transação</span>
+                </div>
+                <div class="menu-item" onclick="goTo('dashboard')">
+                    <i class="fas fa-wallet"></i>
+                    <span>Análise Carteira</span>
+                </div>
+                <div class="menu-item" onclick="goTo('cotacao')">
+                    <i class="fas fa-chart-line"></i>
+                    <span>Preço & Gráfico</span>
+                </div>
+                <div class="menu-item" onclick="goTo('settings')">
+                    <i class="fas fa-sliders-h"></i>
+                    <span>Ajustes</span>
+                </div>
+            </div>
+        </div>
+
+        <div id="screen-economias" class="screen">
+            <h2 style="margin-bottom: 20px;">Adicionar Movimentação</h2>
+            
+            <div class="glass-card">
+                <label style="color:#888; font-size:0.85rem; margin-bottom:8px; display:block; font-weight:bold;">Moeda Fiat</label>
+                <select id="eco-currency" class="modern-input" style="background: rgba(0,0,0,0.6);">
+                    <option value="BRL">🇧🇷 Real (BRL)</option>
+                    <option value="USD">🇺🇸 Dólar (USD)</option>
+                    <option value="EUR">🇪🇺 Euro (EUR)</option>
+                </select>
+
+                <input type="number" id="eco-fiat" class="modern-input" placeholder="Valor Gasto (0.00)">
+                <input type="number" id="eco-sats" class="modern-input" placeholder="Qtd. Satoshis">
+                <input type="text" id="eco-desc" class="modern-input" placeholder="Descrição (Opcional)">
+
+                <div style="display: flex; gap: 10px;">
+                    <button class="btn-modern btn-success" onclick="addTransaction('buy')">
+                        <i class="fas fa-arrow-down"></i> Comprei
+                    </button>
+                    <button class="btn-modern btn-danger" onclick="addTransaction('sell')">
+                        <i class="fas fa-arrow-up"></i> Vendi
+                    </button>
+                </div>
+            </div>
+
+            <h3 style="margin: 30px 0 15px;">Últimas Atividades</h3>
+            <div id="history-list" style="padding-bottom: 20px;"></div>
+        </div>
+
+        <div id="screen-dashboard" class="screen">
+            <h2 style="margin-bottom: 20px;">Sua Carteira</h2>
+            
+            <div class="glass-card sensitive-data" style="border-left: 4px solid var(--success); padding: 15px;">
+                <div style="display:flex; justify-content:space-between; align-items:center;">
+                    <span style="font-weight:bold;">🇧🇷 Real (BRL)</span>
+                    <span id="dash-brl-current" style="color: var(--success); font-weight: bold; font-size: 1.1rem;">R$ 0,00</span>
+                </div>
+                <div style="font-size:0.8rem; color:#777; margin-top:5px;">
+                    Investido: <span id="dash-brl-spent">R$ 0,00</span> • <span id="dash-brl-sats">0</span> sats
+                </div>
+            </div>
+
+            <div class="glass-card sensitive-data" style="border-left: 4px solid #3498db; padding: 15px;">
+                <div style="display:flex; justify-content:space-between; align-items:center;">
+                    <span style="font-weight:bold;">🇺🇸 Dólar (USD)</span>
+                    <span id="dash-usd-current" style="color: #3498db; font-weight: bold; font-size: 1.1rem;">$ 0.00</span>
+                </div>
+                <div style="font-size:0.8rem; color:#777; margin-top:5px;">
+                    Investido: <span id="dash-usd-spent">$ 0.00</span> • <span id="dash-usd-sats">0</span> sats
+                </div>
+            </div>
+
+            <div class="glass-card sensitive-data" style="border-left: 4px solid #9b59b6; padding: 15px;">
+                <div style="display:flex; justify-content:space-between; align-items:center;">
+                    <span style="font-weight:bold;">🇪🇺 Euro (EUR)</span>
+                    <span id="dash-eur-current" style="color: #9b59b6; font-weight: bold; font-size: 1.1rem;">€ 0.00</span>
+                </div>
+                <div style="font-size:0.8rem; color:#777; margin-top:5px;">
+                    Investido: <span id="dash-eur-spent">€ 0.00</span> • <span id="dash-eur-sats">0</span> sats
+                </div>
+            </div>
+
+            <div class="glass-card">
+                <h3 style="font-size: 1rem; margin-bottom: 10px;">Performance (7 Dias)</h3>
+                <div class="chart-wrapper">
+                    <canvas id="portfolioChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <div id="screen-cotacao" class="screen">
+            <div class="glass-card" style="text-align: center; border-color: var(--primary);">
+                <i class="fab fa-bitcoin fa-3x" style="color: var(--primary); margin: 15px 0;"></i>
+                <h2>Valor do Bitcoin</h2>
+                <div id="price-display-brl" style="font-size: 2.2rem; font-weight: 900; margin: 10px 0; color: white;">...</div>
+                
+                <div style="display:flex; justify-content:center; gap:20px; margin-bottom:20px;">
+                    <div style="font-size: 0.9rem; color: #aaa;">USD: <span id="price-display-usd" style="color:white; font-weight:bold;">...</span></div>
+                    <div style="font-size: 0.9rem; color: #aaa;">EUR: <span id="price-display-eur" style="color:white; font-weight:bold;">...</span></div>
+                </div>
+
+                <div class="chart-wrapper" style="height: 180px;">
+                    <canvas id="btcPriceChart"></canvas>
+                </div>
+            </div>
+            
+            <button id="btn-update" class="btn-modern btn-primary" onclick="forceUpdate()">
+                <i class="fas fa-sync-alt"></i> Atualizar Agora
+            </button>
+        </div>
+
+        <div id="screen-settings" class="screen">
+            <h2 style="margin-bottom: 20px;">Ajustes & Backup</h2>
+            
+            <div class="glass-card">
+                <p style="font-size: 0.9rem; color: #ccc; margin-bottom: 15px; line-height: 1.5;">
+                    Seus dados ficam salvos apenas neste dispositivo. Faça backup regularmente.
+                </p>
+                <div style="display: flex; gap: 10px; flex-direction: column;">
+                    <button class="btn-modern btn-outline" onclick="exportData()">
+                        <i class="fas fa-download"></i> Baixar Dados (.json)
+                    </button>
+                    <input type="file" id="import-file" style="display: none;" onchange="importData(this)">
+                    <button class="btn-modern btn-outline" onclick="document.getElementById('import-file').click()">
+                        <i class="fas fa-upload"></i> Restaurar Dados
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <div id="screen-sobre" class="screen">
+            <h2 style="margin-bottom: 20px;">Sobre e Doações</h2>
+            
+            <div class="glass-card" style="text-align: center;">
+                <i class="fab fa-bitcoin fa-3x" style="color: var(--primary); margin-bottom: 15px;"></i>
+                <h3>BTC Ledger Web</h3>
+                <p style="color: #888; font-size: 0.9rem; margin-top: 5px;">Versão 5.0 (Rebranded)</p>
+                <p style="margin-top: 15px; font-size: 0.9rem; line-height: 1.5;">
+                    App desenvolvido para controle total da sua custódia e trades de Bitcoin. Open source, privado e sem servidor.
+                </p>
+            </div>
+
+            <h3 style="margin-bottom: 15px;">Apoie o Projeto</h3>
+            
+            <div class="donation-item" onclick="copyToClipboard('bc1qvsu6n806jg8zswkvpyqxe9dujs6q5398jkaepd', 'Endereço On-Chain')">
+                <div class="donation-info">
+                    <h4><i class="fas fa-link"></i> BTC On-Chain</h4>
+                    <p>bc1qvsu6n806jg8zswkvpyqxe9dujs6q5398jkaepd</p>
+                </div>
+                <i class="far fa-copy" style="color: #666;"></i>
+            </div>
+
+            <div class="donation-item" onclick="copyToClipboard('web3satsfinance@ln.satsails.com', 'Lightning Address')">
+                <div class="donation-info">
+                    <h4><i class="fas fa-bolt"></i> BTC Lightning</h4>
+                    <p>web3satsfinance@ln.satsails.com</p>
+                </div>
+                <i class="far fa-copy" style="color: #666;"></i>
+            </div>
+
+            <div class="donation-item" onclick="copyToClipboard('0x135a83c5a641a4265297853dd70b6f7565e5c8ed', 'Endereço BSC')">
+                <div class="donation-info">
+                    <h4><i class="fas fa-cube"></i> BTC Smart Chain</h4>
+                    <p>0x135a83c5a641a4265297853dd70b6f7565e5c8ed</p>
+                </div>
+                <i class="far fa-copy" style="color: #666;"></i>
+            </div>
+
+             <div class="donation-item" onclick="copyToClipboard('lq1qqtqkfc077990m0f2te096dj9z8jje9f9tea904kje8r6356gp6v3kh6evea85sk8h9rv04vyhnxrz5hpyu6gv8s4vnatqjc5d', 'Endereço Liquid')">
+                <div class="donation-info">
+                    <h4><i class="fas fa-water"></i> BTC Liquid (L-BTC)</h4>
+                    <p>lq1qqtqkfc077990m0f2te096dj9z8jje9f9tea904kje8r6356gp6v3kh6evea85sk8h9rv04vyhnxrz5hpyu6gv8s4vnatqjc5d</p>
+                </div>
+                <i class="far fa-copy" style="color: #666;"></i>
+            </div>
+            
+            <div style="text-align: center; margin-top: 20px; font-size: 0.8rem; color: #555;">
+                Toque no cartão para copiar o endereço.
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<script>
+    // --- SETUP GLOBAL ---
+    let transactions = JSON.parse(localStorage.getItem('btc_transactions_v4')) || [];
+    let prices = { brl: 0, usd: 0, eur: 0 };
+    let chartInstance = null;
+    let priceChartInstance = null;
+    let privacyMode = false;
+
+    window.onload = function() {
+        fetchData();
+        renderHistory();
+        updateBalances();
+    };
+
+    // --- NAVEGAÇÃO ---
+    function goTo(screenId) {
+        document.querySelectorAll('.screen').forEach(el => el.classList.remove('active'));
+        document.getElementById('screen-' + screenId).classList.add('active');
+        
+        if(screenId === 'dashboard') loadPortfolioChart();
+        if(screenId === 'cotacao') { fetchData(); loadPriceChart(); }
+    }
+
+    // --- PRIVACIDADE ---
+    function togglePrivacy() {
+        privacyMode = !privacyMode;
+        const btn = document.getElementById('privacy-btn');
+        const elements = document.querySelectorAll('.sensitive-data');
+        
+        if(privacyMode) {
+            btn.innerHTML = '<i class="fas fa-eye-slash" style="color: var(--danger);"></i>';
+            elements.forEach(el => el.classList.add('blur-effect'));
+        } else {
+            btn.innerHTML = '<i class="fas fa-eye"></i>';
+            elements.forEach(el => el.classList.remove('blur-effect'));
+        }
+    }
+
+    // --- DADOS (CoinGecko + Fear/Greed) ---
+    async function fetchData() {
+        try {
+            // Preços
+            const pRes = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=brl,usd,eur');
+            const pData = await pRes.json();
+            prices.brl = pData.bitcoin.brl;
+            prices.usd = pData.bitcoin.usd;
+            prices.eur = pData.bitcoin.eur;
+
+            // Atualiza Labels
+            document.getElementById('price-display-brl').innerText = formatMoney(prices.brl, 'BRL');
+            document.getElementById('price-display-usd').innerText = formatMoney(prices.usd, 'USD');
+            document.getElementById('price-display-eur').innerText = formatMoney(prices.eur, 'EUR');
+
+            // Fear and Greed
+            const fgRes = await fetch('https://api.alternative.me/fng/');
+            const fgData = await fgRes.json();
+            const val = fgData.data[0].value;
+            const elVal = document.getElementById('fg-value');
+            
+            elVal.innerText = val;
+            document.getElementById('fg-text').innerText = fgData.data[0].value_classification;
+
+            if(val < 25) { elVal.style.color = '#FF3B30'; }
+            else if(val > 75) { elVal.style.color = '#00E096'; }
+            else { elVal.style.color = '#F7931A'; }
+
+            updateBalances();
+
+        } catch (e) { console.error(e); }
+    }
+
+    async function forceUpdate() {
+        const btn = document.getElementById('btn-update');
+        btn.innerHTML = '<i class="fas fa-circle-notch fa-spin"></i> ...';
+        await fetchData();
+        await loadPriceChart();
+        btn.innerHTML = '<i class="fas fa-sync-alt"></i> Atualizar Agora';
+    }
+
+    // --- CHART DE PORTFOLIO (Preenchido e Bonito) ---
+    async function loadPortfolioChart() {
+        const ctx = document.getElementById('portfolioChart').getContext('2d');
+        if(chartInstance) chartInstance.destroy();
+
+        try {
+            const histRes = await fetch('https://api.coingecko.com/api/v3/coins/bitcoin/market_chart?vs_currency=brl&days=7&interval=daily');
+            const histData = await histRes.json();
+            
+            const totalSats = calcTotalSats();
+            
+            const labels = histData.prices.map(p => new Date(p[0]).toLocaleDateString('pt-BR', {day:'2-digit', month:'2-digit'}));
+            const data = histData.prices.map(p => (totalSats / 100000000) * p[1]);
+
+            // Gradiente
+            const gradient = ctx.createLinearGradient(0, 0, 0, 300);
+            gradient.addColorStop(0, 'rgba(247, 147, 26, 0.5)');
+            gradient.addColorStop(1, 'rgba(247, 147, 26, 0.0)');
+
+            chartInstance = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Patrimônio',
+                        data: data,
+                        borderColor: '#F7931A',
+                        backgroundColor: gradient,
+                        borderWidth: 3,
+                        fill: true,
+                        tension: 0.4,
+                        pointBackgroundColor: '#111',
+                        pointBorderColor: '#F7931A',
+                        pointRadius: 4,
+                        pointHoverRadius: 6
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: {display: false}, tooltip: { mode: 'index', intersect: false } },
+                    scales: {
+                        x: { grid: {display: false}, ticks: {color: '#555'} },
+                        y: { display: false } 
+                    },
+                    interaction: { mode: 'nearest', axis: 'x', intersect: false }
+                }
+            });
+        } catch(e) {}
+    }
+
+    // --- CHART DE PREÇO DO BTC ---
+    async function loadPriceChart() {
+        const ctx = document.getElementById('btcPriceChart').getContext('2d');
+        if(priceChartInstance) priceChartInstance.destroy();
+
+        try {
+            const r = await fetch('https://api.coingecko.com/api/v3/coins/bitcoin/market_chart?vs_currency=brl&days=7');
+            const d = await r.json();
+            const pricesArr = d.prices.filter((_, i) => i % 12 === 0); // Reduz pontos
+
+            const labels = pricesArr.map(p => new Date(p[0]).toLocaleDateString('pt-BR'));
+            const values = pricesArr.map(p => p[1]);
+            
+            const color = values[values.length-1] >= values[0] ? '#00E096' : '#FF3B30';
+
+            priceChartInstance = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        data: values,
+                        borderColor: color,
+                        backgroundColor: 'transparent',
+                        borderWidth: 2,
+                        tension: 0.3,
+                        pointRadius: 0,
+                        pointHoverRadius: 5
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: {display: false} },
+                    scales: { x: {display: false}, y: {display: false} }
+                }
+            });
+        } catch(e){}
+    }
+
+    // --- LÓGICA DE TRANSAÇÕES ---
+    function addTransaction(type) {
+        const currency = document.getElementById('eco-currency').value;
+        const fiatVal = parseFloat(document.getElementById('eco-fiat').value) || 0;
+        const satsVal = parseInt(document.getElementById('eco-sats').value) || 0;
+        const desc = document.getElementById('eco-desc').value || (type === 'buy' ? 'Aporte' : 'Saque');
+
+        if(fiatVal === 0 && satsVal === 0) return alert("Preencha os valores");
+
+        const tx = {
+            id: Date.now(), type, currency, fiatVal, satsVal, desc,
+            date: new Date().toLocaleString('pt-BR')
+        };
+        
+        transactions.unshift(tx);
+        saveData();
+        renderHistory();
+        updateBalances();
+        
+        // Limpa
+        document.getElementById('eco-fiat').value = '';
+        document.getElementById('eco-sats').value = '';
+        document.getElementById('eco-desc').value = '';
+        alert("Salvo!");
+    }
+
+    function removeTransaction(id) {
+        if(confirm("Apagar?")) {
+            transactions = transactions.filter(t => t.id !== id);
+            saveData();
+            renderHistory();
+            updateBalances();
+        }
+    }
+
+    function calcTotalSats() {
+        return transactions.reduce((acc, t) => t.type === 'buy' ? acc + t.satsVal : acc - t.satsVal, 0);
+    }
+
+    function updateBalances() {
+        if(prices.brl === 0) return;
+
+        const calc = (curr) => {
+            let inv = 0, sats = 0;
+            transactions.filter(t => t.currency === curr).forEach(t => {
+                if(t.type === 'buy') { inv += t.fiatVal; sats += t.satsVal; }
+                else { inv -= t.fiatVal; sats -= t.satsVal; }
+            });
+            return { inv, sats, val: (sats > 0 ? (sats/100000000)*prices[curr.toLowerCase()] : 0) };
+        };
+
+        const brl = calc('BRL');
+        const usd = calc('USD');
+        const eur = calc('EUR');
+
+        // Update UI
+        document.getElementById('dash-brl-spent').innerText = formatMoney(brl.inv, 'BRL');
+        document.getElementById('dash-brl-sats').innerText = brl.sats.toLocaleString();
+        document.getElementById('dash-brl-current').innerText = formatMoney(brl.val, 'BRL');
+
+        document.getElementById('dash-usd-spent').innerText = formatMoney(usd.inv, 'USD');
+        document.getElementById('dash-usd-sats').innerText = usd.sats.toLocaleString();
+        document.getElementById('dash-usd-current').innerText = formatMoney(usd.val, 'USD');
+
+        document.getElementById('dash-eur-spent').innerText = formatMoney(eur.inv, 'EUR');
+        document.getElementById('dash-eur-sats').innerText = eur.sats.toLocaleString();
+        document.getElementById('dash-eur-current').innerText = formatMoney(eur.val, 'EUR');
+
+        // Hero Total (Converte tudo para BRL para somar o patrimonio total)
+        const totalSats = brl.sats + usd.sats + eur.sats;
+        const totalVal = (totalSats / 100000000) * prices.brl;
+
+        document.getElementById('hero-balance').innerText = formatMoney(totalVal, 'BRL');
+        document.getElementById('hero-sats').innerText = totalSats.toLocaleString() + ' sats';
+    }
+
+    function renderHistory() {
+        const l = document.getElementById('history-list');
+        l.innerHTML = '';
+        transactions.slice(0, 10).forEach(tx => {
+            const isBuy = tx.type === 'buy';
+            const color = isBuy ? 'var(--success)' : 'var(--danger)';
+            l.innerHTML += `
+                <div style="display:flex; justify-content:space-between; align-items:center; padding:15px; background:rgba(255,255,255,0.05); margin-bottom:10px; border-radius:12px; border-left:3px solid ${color};">
+                    <div>
+                        <div style="font-weight:bold; font-size:0.9rem;">${tx.desc}</div>
+                        <div style="font-size:0.7rem; color:#888;">${tx.date}</div>
+                    </div>
+                    <div style="text-align:right;">
+                        <div style="color:${color}; font-weight:bold;">${isBuy?'+':'-'} ${formatMoney(tx.fiatVal, tx.currency)}</div>
+                        <div style="font-size:0.8rem; color:#888;">${tx.satsVal} sats</div>
+                        <i class="fas fa-trash" onclick="removeTransaction(${tx.id})" style="font-size:0.8rem; color:#555; margin-top:5px; cursor:pointer;"></i>
+                    </div>
+                </div>
+            `;
+        });
+    }
+
+    // --- UTIL ---
+    function copyToClipboard(text, label) {
+        navigator.clipboard.writeText(text).then(() => alert(label + " copiado!"));
+    }
+    function saveData() { localStorage.setItem('btc_transactions_v4', JSON.stringify(transactions)); }
+    function exportData() {
+        const d = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(transactions));
+        const a = document.createElement('a'); a.href = d; a.download = "backup.json"; a.click();
+    }
+    function importData(inp) {
+        const f = inp.files[0];
+        const r = new FileReader();
+        r.onload = e => { transactions = JSON.parse(e.target.result); saveData(); renderHistory(); updateBalances(); alert("OK!"); };
+        r.readAsText(f);
+    }
+    function formatMoney(v, c) { return v.toLocaleString('pt-BR', { style: 'currency', currency: c }); }
+
+</script>
+</body>
+</html>
+
