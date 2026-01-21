@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>BTC Ledger - v7.0</title>
+    
+    <meta name="description" content="App de gestão de portfólio Bitcoin. Soberano, privado e sem servidor.">
+    
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://btc-ledger.vercel.app/">
+    <meta property="og:title" content="BTC Ledger Ultimate">
+    <meta property="og:description" content="Controle total da sua custódia e trades de Bitcoin.">
+    <meta property="og:image" content="preview.png">
+
+    <meta property="twitter:card" content="summary_large_image">
+    <meta property="twitter:url" content="https://btc-ledger.vercel.app/">
+    <meta property="twitter:title" content="BTC Ledger Ultimate">
+    <meta property="twitter:description" content="Controle total da sua custódia e trades de Bitcoin.">
+    <meta property="twitter:image" content="preview.png">
+
+    <link rel="icon" type="image/png" href="https://btc-ledger.vercel.app/icon.png">
+    <link rel="preview" type="image/png" href="https://btc-ledger.vercel.app/preview.png">
+    <link rel="apple-touch-icon" href="icon.png">
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#050505">
+    
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <link rel="stylesheet" href="style.css">
+    
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+
+<div id="copy-modal" class="modal-overlay">
+    <div class="modal-box">
+        <i id="modal-network-icon" class="fas fa-check-circle" style="font-size: 3rem; color: var(--primary); margin-bottom: 20px;"></i>
+        <div id="modal-network-badge" class="network-badge">Rede</div>
+        <h3 style="margin-bottom: 10px;">Endereço Copiado!</h3>
+        <p style="font-size: 0.9rem; color: #ccc; margin-bottom: 20px;">Use apenas a rede indicada.</p>
+        <p id="modal-instruction" style="font-size: 0.8rem; color: var(--primary); margin-bottom: 20px;">Instrução.</p>
+        <button class="btn-modern btn-primary" onclick="closeModal()">Entendido</button>
+    </div>
+</div>
+
+<div class="app-container">
+    <header>
+        <div class="brand"><i class="fab fa-bitcoin fa-xl" style="color: var(--primary);"></i> BTC LEDGER</div>
+        <div style="display: flex; gap: 10px;">
+            <button class="icon-btn" onclick="togglePrivacy()" id="privacy-btn"><i class="fas fa-eye"></i></button>
+            <button class="icon-btn" onclick="goTo('home')"><i class="fas fa-home"></i></button>
+        </div>
+    </header>
+
+    <div class="screen-content">
+        <div id="screen-home" class="screen active">
+            <div class="hero-card">
+                 <div style="font-size: 0.8rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 2px; margin-bottom: 8px;">Patrimônio Estimado</div>
+                 <div class="sensitive-data hero-balance" id="hero-balance">R$ 0,00</div>
+                 <div class="sensitive-data hero-sats" id="hero-sats">0 sats</div>
+            </div>
+
+            <div class="widget-row">
+                <div class="glass-card widget" style="margin: 0; border: 1px solid #333;" id="tm-widget">
+                    <div style="font-size: 0.7rem; color: #888; text-transform: uppercase; font-weight: bold;">Ticket Médio (BRL)</div>
+                    <div class="sensitive-data" id="tm-value" style="font-size: 1.3rem; font-weight: 900; margin: 5px 0;">R$ 0,00</div>
+                </div>
+                <div class="glass-card widget" style="margin: 0; background: linear-gradient(145deg, #222, #111); cursor: pointer;" onclick="goTo('sobre')">
+                    <i class="fas fa-hand-holding-heart" style="color: var(--primary); font-size: 1.5rem; margin-bottom: 8px;"></i>
+                    <div style="font-size: 0.8rem; font-weight: bold;">Sobre e<br>Doações</div>
+                </div>
+            </div>
+
+            <div class="menu-grid">
+                <div class="menu-item" onclick="goTo('economias')"><i class="fas fa-plus-circle"></i><span>Nova Transação</span></div>
+                <div class="menu-item" onclick="goTo('dashboard')"><i class="fas fa-wallet"></i><span>Análise Carteira</span></div>
+                <div class="menu-item" onclick="goTo('cotacao')"><i class="fas fa-chart-line"></i><span>Preço & Gráfico</span></div>
+                <div class="menu-item" onclick="goTo('settings')"><i class="fas fa-sliders-h"></i><span>Ajustes</span></div>
+            </div>
+        </div>
+
+        <div id="screen-economias" class="screen">
+            <h2 style="margin-bottom: 20px;">Adicionar Movimentação</h2>
+            <div class="glass-card">
+                <label style="color:#888; font-size:0.8rem; margin-bottom:5px; display:block;">Data da Transação</label>
+                <input type="datetime-local" id="eco-date" class="modern-input">
+                
+                <select id="eco-currency" class="modern-input" style="background: rgba(0,0,0,0.6);"><option value="BRL">🇧🇷 Real (BRL)</option><option value="USD">🇺🇸 Dólar (USD)</option></select>
+                <input type="number" id="eco-fiat" class="modern-input" placeholder="Valor Gasto (0.00)">
+                <input type="number" id="eco-sats" class="modern-input" placeholder="Qtd. Satoshis">
+                <input type="text" id="eco-desc" class="modern-input" placeholder="Descrição (Opcional)">
+                <button class="btn-modern btn-success" onclick="addTransaction('buy')" style="margin-bottom: 10px;">Comprei</button>
+                <button class="btn-modern btn-danger" onclick="addTransaction('sell')">Vendi</button>
+            </div>
+            <div id="history-list" style="padding-bottom: 20px;"></div>
+        </div>
+
+        <div id="screen-dashboard" class="screen">
+            <h2 style="margin-bottom: 20px;">Sua Carteira</h2>
+             <div class="glass-card sensitive-data" style="border-left: 4px solid var(--success); padding: 15px;">
+                <div style="display:flex; justify-content:space-between;"><span>🇧🇷 BRL</span><span id="dash-brl-current" style="color:var(--success);font-weight:bold;">R$ 0,00</span></div>
+            </div>
+             <div class="glass-card sensitive-data" style="border-left: 4px solid #3498db; padding: 15px;">
+                <div style="display:flex; justify-content:space-between;"><span>🇺🇸 USD</span><span id="dash-usd-current" style="color:#3498db;font-weight:bold;">$ 0.00</span></div>
+            </div>
+            
+            <div class="glass-card">
+                <h3 style="font-size: 1rem; margin-bottom: 10px;">Performance (7 Dias)</h3>
+                <div class="chart-wrapper"><canvas id="portfolioChart"></canvas></div>
+            </div>
+        </div>
+
+        <div id="screen-cotacao" class="screen">
+            <h2 style="margin-bottom: 20px;">Cotações</h2>
+            <button id="btn-update" class="btn-modern btn-primary" onclick="forceUpdate()" style="margin-bottom: 20px;">
+                <i class="fas fa-sync-alt"></i> Atualizar
+            </button>
+
+            <div class="glass-card">
+                <div style="display:flex; justify-content:space-between;">
+                    <h3 style="font-size: 1rem;">BTC / BRL</h3>
+                    <div id="chart-price-brl" style="font-weight: 900;">...</div>
+                </div>
+                <div class="chart-wrapper"><canvas id="chartBRL"></canvas></div>
+            </div>
+
+            <div class="glass-card">
+                 <div style="display:flex; justify-content:space-between;">
+                    <h3 style="font-size: 1rem;">BTC / USDT</h3>
+                    <div id="chart-price-usd" style="font-weight: 900;">...</div>
+                </div>
+                <div class="chart-wrapper"><canvas id="chartUSD"></canvas></div>
+            </div>
+
+             <div class="glass-card" style="text-align: center; border-color: var(--primary);">
+                <h3 style="font-size: 1rem; margin-bottom: 15px;">Sentimento de Mercado</h3>
+                <div style="display: flex; justify-content: space-between; font-size: 0.8rem; color: #ccc;">
+                    <span>Bullish <i class="fas fa-arrow-up" style="color: var(--success);"></i></span>
+                    <span><i class="fas fa-arrow-down" style="color: var(--danger);"></i> Bearish</span>
+                </div>
+                <div class="sentiment-bar-container">
+                    <div id="sentiment-up" class="sentiment-bar-up" style="width: 50%;"></div>
+                    <div id="sentiment-down" class="sentiment-bar-down" style="width: 50%;"></div>
+                </div>
+                <div style="font-size: 0.9rem; font-weight: bold;">
+                    <span id="sentiment-up-val" style="color: var(--success);">--%</span> vs <span id="sentiment-down-val" style="color: var(--danger);">--%</span>
+                </div>
+            </div>
+        </div>
+
+        <div id="screen-settings" class="screen">
+             <h2 style="margin-bottom: 20px;">Ajustes</h2>
+             <div class="glass-card">
+                <button class="btn-modern btn-outline" onclick="exportData()"><i class="fas fa-download"></i> Baixar Dados</button>
+                <input type="file" id="import-file" style="display: none;" onchange="importData(this)">
+                <button class="btn-modern btn-outline" onclick="document.getElementById('import-file').click()" style="margin-top: 15px;"><i class="fas fa-upload"></i> Restaurar Dados</button>
+             </div>
+        </div>
+
+        <div id="screen-sobre" class="screen">
+            <h2 style="margin-bottom: 20px;">Sobre</h2>
+            <div class="glass-card" style="text-align: center;">
+                <i class="fab fa-bitcoin fa-3x" style="color: var(--primary); margin-bottom: 15px;"></i>
+                <h3>BTC Ledger Web</h3>
+                <p style="color: var(--primary); font-size: 0.9rem; margin-top: 5px; font-weight: bold;">Desenvolvido por: THxWeb3Dev</p>
+                <p style="color: #888; font-size: 0.85rem; margin-top: 2px;">Universo Descentralizado (DeFi)</p>
+            </div>
+            
+            <h3 style="margin-bottom: 15px;">Doações</h3>
+            <div class="donation-item" onclick="showCopyModal('bc1qvsu6n806jg8zswkvpyqxe9dujs6q5398jkaepd', 'btc')">
+                <div class="donation-info"><h4><i class="fas fa-link"></i> On-Chain</h4><p class="truncated-address">bc1qvsu6n806jg8zswkvpyqxe9dujs6q5398jkaepd</p></div><i class="far fa-copy" style="color: #666;"></i>
+            </div>
+            <div class="donation-item" onclick="showCopyModal('web3satsfinance@ln.satsails.com', 'ln')">
+                <div class="donation-info"><h4><i class="fas fa-bolt"></i> Lightning</h4><p class="truncated-address">web3satsfinance@ln.satsails.com</p></div><i class="far fa-copy" style="color: #666;"></i>
+            </div>
+             <div class="donation-item" onclick="showCopyModal('0x135a83c5a641a4265297853dd70b6f7565e5c8ed', 'bsc')">
+                <div class="donation-info"><h4><i class="fas fa-cube"></i> BSC (BEP20)</h4><p class="truncated-address">0x135a83c5a641a4265297853dd70b6f7565e5c8ed</p></div><i class="far fa-copy" style="color: #666;"></i>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="script.js"></script>
+</body>
+</html>
